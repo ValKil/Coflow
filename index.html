@@ -181,10 +181,10 @@
     </div>
 
     <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
-    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center; background: #f7f9fc; padding: 4px 12px; border-radius: 40px; border: 1px solid #dde3ef;">
-    <input type="text" id="gist-id" placeholder="Gist ID (để tải xuống)" style="padding: 6px 12px; border-radius: 999px; border:1px solid #dde3ef; font-size:0.8rem; width:180px;">
-    <button class="btn btn-secondary btn-sm" id="upload-gist"><i class="fab fa-github"></i> Upload</button>
-    <button class="btn btn-secondary btn-sm" id="download-gist"><i class="fab fa-github"></i> Download</button>
+        <input type="text" id="gist-id" placeholder="Gist ID (nếu có)" style="padding: 6px 12px; border-radius: 999px; border:1px solid var(--border); font-size:0.8rem; width:180px;">
+        <button class="btn btn-secondary btn-sm" id="upload-gist"><i class="fab fa-github"></i> Upload</button>
+        <button class="btn btn-secondary btn-sm" id="download-gist"><i class="fab fa-github"></i> Download</button>
+        <button class="btn btn-secondary btn-sm" id="set-token"><i class="fas fa-key"></i> Token</button>
     </div>
 
 </div>
@@ -333,7 +333,7 @@ let steps     = [];
 let edges     = [];
 let companies = [];
 let notes     = [];
-const GITHUB_TOKEN = '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';
+
 let selStep1    = null;   // selected step id in tab1
 let selCompany  = null;   // selected company id in tab2
 let selStep2    = null;   // selected step id in tab2
@@ -375,7 +375,8 @@ function setGitToken(token) {
 }
 
 async function uploadToGist(gistId) {
-    if (!GITHUB_TOKEN) { alert('Chưa có GitHub token'); return; }
+    const token = getGitToken();
+    if (!token) { alert('Chưa có GitHub token. Nhấn nút Token để nhập.'); return; }
 
     const data = { steps, edges, companies, notes };
     const content = JSON.stringify(data, null, 2);
@@ -399,7 +400,7 @@ async function uploadToGist(gistId) {
         const res = await fetch(url, {
             method,
             headers: {
-                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Authorization': `token ${token}`,
                 'Accept': 'application/vnd.github.v3+json'
             },
             body: JSON.stringify(body)
@@ -418,11 +419,12 @@ async function uploadToGist(gistId) {
 
 async function downloadFromGist(gistId) {
     if (!gistId) { alert('Nhập Gist ID vào ô bên cạnh'); return; }
-    if (!GITHUB_TOKEN) { alert('Chưa có token'); return; }
+    const token = getGitToken();
+    if (!token) { alert('Chưa có token'); return; }
 
     try {
         const res = await fetch(`https://api.github.com/gists/${gistId}`, {
-            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+            headers: { 'Authorization': `token ${token}`, 'Accept': 'application/vnd.github.v3+json' }
         });
         if (!res.ok) throw new Error(await res.text());
         const gist = await res.json();
@@ -695,14 +697,18 @@ function updateCyData(cy, highlightId, companyId) {
     cy.style(CY_STYLE);
 }
 
-document.getElementById('upload-gist').addEventListener('click', () => {
+document.getElementById('upload-gist').onclick = () => {
     const gistId = document.getElementById('gist-id').value.trim() || null;
     uploadToGist(gistId);
-});
-document.getElementById('download-gist').addEventListener('click', () => {
+};
+document.getElementById('download-gist').onclick = () => {
     const gistId = document.getElementById('gist-id').value.trim();
     downloadFromGist(gistId);
-});
+};
+document.getElementById('set-token').onclick = () => {
+    const token = prompt('Nhập GitHub Personal Access Token (cần quyền gist)');
+    if (token) setGitToken(token);
+};
 
 // ═══════════════════════════════════════════════════
 //  TAB 1
