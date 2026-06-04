@@ -1,0 +1,1045 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+    <title>Workflow Manager</title>
+    <script src="https://unpkg.com/cytoscape@3.29.2/dist/cytoscape.min.js"></script>
+    <script src="https://unpkg.com/dagre@0.8.5/dist/dagre.min.js"></script>
+    <script src="https://unpkg.com/cytoscape-dagre@2.5.0/cytoscape-dagre.js"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+        :root {
+            --bg:        #f0f4fa;
+            --surface:   #ffffff;
+            --surface2:  #f7f9fc;
+            --border:    #dde3ef;
+            --primary:   #1a5fb4;
+            --primary-l: #d0e4ff;
+            --accent:    #e8b200;
+            --accent-l:  #fff8d6;
+            --text:      #0d1b2a;
+            --text-2:    #4a5568;
+            --danger:    #c0392b;
+            --danger-l:  #fdecea;
+            --success:   #1a7f4b;
+            --radius:    16px;
+            --radius-sm: 8px;
+            --shadow:    0 4px 24px rgba(0,0,0,0.07);
+            --shadow-md: 0 8px 32px rgba(0,0,0,0.11);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            background: var(--bg);
+            font-family: 'Be Vietnam Pro', sans-serif;
+            color: var(--text);
+            min-height: 100vh;
+            height: 100vh;
+            overflow: hidden;
+        }
+
+        /* ── Header ── */
+        .app-header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 16px 32px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.04);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .app-header h1 { font-size: 1.25rem; font-weight: 700; color: var(--primary); }
+        .app-header .sub { font-size: 0.8rem; color: var(--text-2); }
+
+        /* ── Layout ── */
+        .app-body { max-width: 100%; margin: 0 auto; padding: 12px 24px; height: calc(100vh - 65px); overflow-y: auto;}
+
+        /* ── Tabs ── */
+        .tabs { display: flex; gap: 4px; margin-bottom: 20px; border-bottom: 2px solid var(--border); }
+        .tab-btn {
+            background: none; border: none; padding: 10px 22px;
+            font-family: inherit; font-size: 0.9rem; font-weight: 600;
+            color: var(--text-2); cursor: pointer; border-radius: 8px 8px 0 0;
+            transition: all .18s;
+        }
+        .tab-btn:hover { color: var(--primary); background: var(--primary-l); }
+        .tab-btn.active { color: var(--primary); background: var(--surface); border-bottom: 3px solid var(--primary); }
+        .tab-pane { display: none; }
+        .tab-pane.active-pane { display: block; animation: fadeIn .18s; }
+        @keyframes fadeIn { from { opacity:0; transform:translateY(4px); } to { opacity:1; transform:none; } }
+
+        /* ── Card ── */
+        .card {
+            background: var(--surface);
+            border-radius: var(--radius);
+            box-shadow: var(--shadow);
+            padding: 24px;
+            margin-bottom: 20px;
+            border: 1px solid var(--border);
+        }
+        .card-title { font-size: 1rem; font-weight: 700; color: var(--text); margin-bottom: 16px; display: flex; align-items: center; gap: 8px; }
+
+        /* ── Buttons ── */
+        .btn { display: inline-flex; align-items: center; gap: 6px; border: none; border-radius: 999px; padding: 7px 18px; font-family: inherit; font-size: 0.875rem; font-weight: 600; cursor: pointer; transition: all .15s; }
+        .btn-primary { background: var(--primary); color: #fff; }
+        .btn-primary:hover { background: #154a95; box-shadow: 0 4px 12px rgba(26,95,180,.3); }
+        .btn-secondary { background: var(--surface2); color: var(--text); border: 1px solid var(--border); }
+        .btn-secondary:hover { background: var(--border); }
+        .btn-danger { background: var(--danger-l); color: var(--danger); }
+        .btn-danger:hover { background: var(--danger); color: #fff; }
+        .btn-sm { padding: 4px 12px; font-size: 0.8rem; }
+
+        /* ── Graph ── */
+        .graph-wrap { border-radius: var(--radius); overflow: hidden; border: 1px solid var(--border); background: #fafbff; position: relative; }
+        .cy-canvas { width: 100%; height: calc(100vh - 280px); display: block; }
+        .graph-toolbar { display: flex; align-items: center; gap: 8px; margin-bottom: 10px; flex-wrap: wrap; }
+        .graph-hint { font-size: 0.78rem; color: var(--text-2); margin-left: auto; }
+
+        /* ── Note panel ── */
+        .note-panel {
+            background: var(--accent-l);
+            border: 1px solid #f0d060;
+            border-radius: var(--radius);
+            padding: 18px 20px;
+            margin-top: 16px;
+        }
+        .note-panel .panel-title { font-size: 0.875rem; font-weight: 700; color: #7a5c00; margin-bottom: 12px; }
+        .note-card {
+            background: #fff;
+            border-left: 4px solid var(--accent);
+            border-radius: var(--radius-sm);
+            padding: 12px 14px;
+            margin-bottom: 10px;
+            font-size: 0.875rem;
+        }
+        .note-card .company-tag { font-weight: 700; color: var(--primary); }
+        .note-card a { color: var(--primary); }
+        .empty-hint { color: var(--text-2); font-size: 0.875rem; font-style: italic; }
+
+        /* ── Company badges ── */
+        .company-list { display: flex; flex-wrap: wrap; gap: 8px; margin: 12px 0; }
+        .company-badge {
+            display: inline-flex; align-items: center; gap: 8px;
+            background: var(--surface2); border: 1px solid var(--border);
+            padding: 6px 16px; border-radius: 999px; cursor: pointer;
+            font-size: 0.875rem; font-weight: 500; transition: all .15s;
+        }
+        .company-badge:hover { border-color: var(--primary); color: var(--primary); }
+        .company-badge.selected { background: var(--primary); color: #fff; border-color: var(--primary); }
+        .company-badge .del-ico { opacity: .5; transition: opacity .15s; }
+        .company-badge:hover .del-ico, .company-badge.selected .del-ico { opacity: 1; }
+
+        /* ── Admin list ── */
+        .list-item { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius-sm); padding: 8px 14px; margin-bottom: 6px; display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: 0.875rem; }
+        .list-item .label { flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .list-scroll { max-height: 280px; overflow-y: auto; padding-right: 4px; }
+
+        /* ── Form fields ── */
+        .field { margin-bottom: 12px; }
+        .field label { display: block; font-size: 0.8rem; font-weight: 600; color: var(--text-2); margin-bottom: 4px; }
+        .field input, .field select, .field textarea {
+            width: 100%; border: 1px solid var(--border); border-radius: var(--radius-sm);
+            padding: 8px 12px; font-family: inherit; font-size: 0.875rem; color: var(--text);
+            background: var(--surface); transition: border-color .15s;
+        }
+        .field input:focus, .field select:focus, .field textarea:focus { outline: none; border-color: var(--primary); box-shadow: 0 0 0 3px var(--primary-l); }
+
+        /* ── Sub-form panel ── */
+        .sub-form { background: var(--surface2); border: 1px solid var(--border); border-radius: var(--radius); padding: 18px 20px; margin-top: 14px; }
+        .sub-form h4 { font-size: 0.9rem; font-weight: 700; margin-bottom: 14px; }
+
+        /* ── Modal ── */
+        .modal-overlay { position: fixed; inset: 0; background: rgba(0,0,0,.45); display: none; align-items: center; justify-content: center; z-index: 999; }
+        .modal-overlay.open { display: flex; animation: fadeIn .15s; }
+        .modal-box { background: var(--surface); border-radius: var(--radius); padding: 28px; width: 92%; max-width: 480px; box-shadow: var(--shadow-md); }
+        .modal-box h3 { font-size: 1rem; font-weight: 700; margin-bottom: 18px; }
+        .modal-actions { display: flex; gap: 8px; margin-top: 16px; justify-content: flex-end; }
+
+        /* ── Inline add bar ── */
+        .add-bar { display: flex; gap: 8px; align-items: center; }
+        .add-bar input { flex: 1; }
+
+        hr { border: none; border-top: 1px solid var(--border); margin: 16px 0; }
+        .row2 { display: grid; grid-template-columns: 1fr 2fr; gap: 20px; }
+        @media (max-width: 700px) { .row2 { grid-template-columns: 1fr; } }
+
+        /* Cytoscape node label styling via HTML labels not available — style is in cy stylesheet */
+    </style>
+</head>
+<body>
+
+<header class="app-header">
+    <i class="fas fa-project-diagram" style="color:var(--primary);font-size:1.4rem;"></i>
+    <div>
+        <h1>Workflow Manager</h1>
+        <div class="sub">Kéo thả các bước để bố trí · Click bước để xem lưu ý</div>
+    </div>
+
+    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center;">
+    <div style="margin-left: auto; display: flex; gap: 8px; align-items: center; background: #f7f9fc; padding: 4px 12px; border-radius: 40px; border: 1px solid #dde3ef;">
+    <input type="text" id="gist-id" placeholder="Gist ID (để tải xuống)" style="padding: 6px 12px; border-radius: 999px; border:1px solid #dde3ef; font-size:0.8rem; width:180px;">
+    <button class="btn btn-secondary btn-sm" id="upload-gist"><i class="fab fa-github"></i> Upload</button>
+    <button class="btn btn-secondary btn-sm" id="download-gist"><i class="fab fa-github"></i> Download</button>
+    </div>
+
+</div>
+
+</header>
+
+<div class="app-body">
+
+    <!-- TABS -->
+    <div class="tabs">
+        <button class="tab-btn active" data-tab="tab1"><i class="fas fa-sitemap"></i> Sơ đồ</button>
+        <button class="tab-btn" data-tab="tab2"><i class="fas fa-building"></i> Theo công ty</button>
+        <button class="tab-btn" data-tab="tab3"><i class="fas fa-tools"></i> Quản trị</button>
+    </div>
+
+    <!-- TAB 1 -->
+    <div id="tab1" class="tab-pane active-pane">
+        <div class="card">
+            <div class="graph-toolbar">
+                <button class="btn btn-secondary btn-sm" id="btn-reset-layout1">
+                    <i class="fas fa-undo-alt"></i> Reset layout
+                </button>
+                <button class="btn btn-secondary btn-sm" id="btn-fit1">
+                    <i class="fas fa-expand"></i> Fit màn hình
+                </button>
+                <span class="graph-hint"><i class="fas fa-arrows-alt"></i> Kéo thả ô · Scroll zoom</span>
+            </div>
+            <div class="graph-wrap">
+                <div id="cy1" class="cy-canvas"></div>
+            </div>
+            <div id="panel1" class="note-panel">
+                <div class="panel-title"><i class="fas fa-sticky-note"></i> Lưu ý cho bước đã chọn</div>
+                <div id="panel1-content" class="empty-hint">👉 Click vào một bước trên sơ đồ để xem chi tiết</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 2 -->
+    <div id="tab2" class="tab-pane">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-building"></i> Chọn công ty</div>
+            <div class="add-bar" style="margin-bottom:10px;">
+                <input type="text" id="inp-new-company" placeholder="Tên công ty mới…">
+                <button class="btn btn-primary btn-sm" id="btn-add-company"><i class="fas fa-plus"></i> Thêm</button>
+            </div>
+            <div class="company-list" id="company-list"></div>
+            <hr>
+            <div class="graph-toolbar">
+                <button class="btn btn-secondary btn-sm" id="btn-reset-layout2"><i class="fas fa-undo-alt"></i> Reset layout</button>
+                <button class="btn btn-secondary btn-sm" id="btn-fit2"><i class="fas fa-expand"></i> Fit</button>
+                <span class="graph-hint">🟡 = có lưu ý riêng</span>
+            </div>
+            <div class="graph-wrap">
+                <div id="cy2" class="cy-canvas" style="height:480px;"></div>
+            </div>
+            <div id="panel2" class="note-panel" style="display:none;">
+                <div class="panel-title" id="panel2-title"></div>
+                <div id="panel2-content"></div>
+            </div>
+        </div>
+    </div>
+
+    <!-- TAB 3 -->
+    <div id="tab3" class="tab-pane">
+        <div class="card">
+            <div class="card-title"><i class="fas fa-tools"></i> Quản trị workflow</div>
+            <div style="display:flex;gap:8px;margin-bottom:16px;flex-wrap:wrap;">
+                <button class="btn btn-primary btn-sm" id="btn-add-step"><i class="fas fa-plus-circle"></i> Thêm bước</button>
+                <button class="btn btn-secondary btn-sm" id="btn-add-edge"><i class="fas fa-link"></i> Thêm đường nối</button>
+            </div>
+            <div class="row2">
+                <div>
+                    <div style="font-size:.85rem;font-weight:700;margin-bottom:8px;color:var(--text-2);">📋 Bước</div>
+                    <div class="list-scroll" id="list-steps"></div>
+                </div>
+                <div>
+                    <div style="font-size:.85rem;font-weight:700;margin-bottom:8px;color:var(--text-2);">🔗 Đường nối</div>
+                    <div class="list-scroll" id="list-edges"></div>
+                </div>
+            </div>
+
+            <!-- Add new step form -->
+            <div class="sub-form" id="form-add-step" style="display:none;">
+                <h4>➕ Thêm bước mới</h4>
+                <div class="field"><label>Tên bước <span style="color:var(--danger)">*</span></label><input type="text" id="new-step-name" placeholder="VD: Kiểm tra hồ sơ"></div>
+                <div class="field"><label>Công đoạn lớn</label><input type="text" id="new-step-major" placeholder="VD: 1. Tiếp nhận"></div>
+                <div class="field"><label>Mô tả (tuỳ chọn)</label><textarea id="new-step-desc" rows="2" placeholder="Mô tả ngắn về bước này…"></textarea></div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm" id="btn-save-new-step"><i class="fas fa-check"></i> Lưu bước</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-cancel-new-step">Hủy</button>
+                </div>
+            </div>
+
+            <!-- Edit step form -->
+            <div class="sub-form" id="form-edit-step" style="display:none;">
+                <h4>✏️ Sửa bước</h4>
+                <input type="hidden" id="edit-step-id">
+                <div class="field"><label>Tên bước</label><input type="text" id="edit-step-name"></div>
+                <div class="field"><label>Công đoạn lớn</label><input type="text" id="edit-step-major"></div>
+                <div class="field"><label>Mô tả (tuỳ chọn)</label><textarea id="edit-step-desc" rows="2"></textarea></div>
+                <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                    <button class="btn btn-primary btn-sm" id="btn-update-step">Cập nhật</button>
+                    <button class="btn btn-danger btn-sm" id="btn-delete-step">Xóa bước</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-cancel-edit-step">Hủy</button>
+                </div>
+            </div>
+
+            <!-- Add edge form -->
+            <div class="sub-form" id="form-add-edge" style="display:none;">
+                <h4>🔀 Thêm đường nối</h4>
+                <div style="display:flex;gap:12px;align-items:center;flex-wrap:wrap;">
+                    <div class="field" style="flex:1;min-width:140px;"><label>Từ bước</label><select id="edge-from"></select></div>
+                    <span style="padding-top:20px;">→</span>
+                    <div class="field" style="flex:1;min-width:140px;"><label>Đến bước</label><select id="edge-to"></select></div>
+                </div>
+                <div class="field"><label>Điều kiện / nhãn (tuỳ chọn)</label><input type="text" id="edge-label" placeholder="VD: thiếu hồ sơ"></div>
+                <div style="display:flex;gap:8px;">
+                    <button class="btn btn-primary btn-sm" id="btn-save-edge">Lưu</button>
+                    <button class="btn btn-secondary btn-sm" id="btn-cancel-edge">Hủy</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Modal thêm/sửa lưu ý -->
+<div class="modal-overlay" id="note-modal">
+    <div class="modal-box">
+        <h3 id="modal-title">Thêm lưu ý</h3>
+        <input type="hidden" id="modal-note-id">
+        <div class="field"><label>Ghi nhớ / nội dung</label><textarea id="modal-memo" rows="3" placeholder="Nhập nội dung lưu ý…"></textarea></div>
+        <div class="field"><label>Đường dẫn file (tuỳ chọn)</label><input type="text" id="modal-file" placeholder="https://... hoặc \\server\path"></div>
+        <div class="field"><label>Lưu ý bổ sung</label><input type="text" id="modal-other" placeholder="VD: cần mộc đỏ, 2 ngày…"></div>
+        <div class="modal-actions">
+            <button class="btn btn-secondary" id="modal-cancel">Hủy</button>
+            <button class="btn btn-primary" id="modal-save">Lưu lưu ý</button>
+        </div>
+    </div>
+</div>
+
+<script>
+// ═══════════════════════════════════════════════════
+//  DATA LAYER
+// ═══════════════════════════════════════════════════
+let steps     = [];
+let edges     = [];
+let companies = [];
+let notes     = [];
+const GITHUB_TOKEN = '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';
+let selStep1    = null;   // selected step id in tab1
+let selCompany  = null;   // selected company id in tab2
+let selStep2    = null;   // selected step id in tab2
+
+let cy1 = null;
+let cy2 = null;
+
+// pending for modal
+let modalMeta = { companyId: null, stepId: null, noteId: null };
+
+// ── helpers ──
+function uid() { return 'id_' + Date.now().toString(36) + Math.random().toString(36).slice(2,7); }
+
+function esc(s) {
+    if (!s) return '';
+    return String(s).replace(/[&<>"']/g, m => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]));
+}
+
+function saveAll() {
+    try {
+        localStorage.setItem('wf2_steps',     JSON.stringify(steps));
+        localStorage.setItem('wf2_edges',     JSON.stringify(edges));
+        localStorage.setItem('wf2_companies', JSON.stringify(companies));
+        localStorage.setItem('wf2_notes',     JSON.stringify(notes));
+    } catch(e) { console.warn('localStorage unavailable:', e); }
+}
+
+// Hàm lấy token
+function getGitToken() {
+    return sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
+}
+
+// Hàm lưu token (người dùng nhập)
+function setGitToken(token) {
+    if (confirm('Lưu token? (Chỉ lưu trong trình duyệt, không gửi đi đâu ngoài GitHub)')) {
+        localStorage.setItem('github_token', token);
+        alert('Đã lưu token');
+    }
+}
+
+async function uploadToGist(gistId) {
+    if (!GITHUB_TOKEN) { alert('Chưa có GitHub token'); return; }
+
+    const data = { steps, edges, companies, notes };
+    const content = JSON.stringify(data, null, 2);
+    const fileName = 'workflow_data.json';
+
+    const url = gistId 
+        ? `https://api.github.com/gists/${gistId}` 
+        : 'https://api.github.com/gists';
+
+    const method = gistId ? 'PATCH' : 'POST';
+    const body = gistId ? {
+        description: 'Workflow Manager Data',
+        files: { [fileName]: { content } }
+    } : {
+        description: 'Workflow Manager Data',
+        public: false,
+        files: { [fileName]: { content } }
+    };
+
+    try {
+        const res = await fetch(url, {
+            method,
+            headers: {
+                'Authorization': `token ${GITHUB_TOKEN}`,
+                'Accept': 'application/vnd.github.v3+json'
+            },
+            body: JSON.stringify(body)
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const json = await res.json();
+        const newGistId = json.id;
+        document.getElementById('gist-id').value = newGistId;
+        alert(`Upload thành công! Gist ID: ${newGistId}`);
+        return newGistId;
+    } catch (err) {
+        console.error(err);
+        alert('Upload thất bại: ' + err.message);
+    }
+}
+
+async function downloadFromGist(gistId) {
+    if (!gistId) { alert('Nhập Gist ID vào ô bên cạnh'); return; }
+    if (!GITHUB_TOKEN) { alert('Chưa có token'); return; }
+
+    try {
+        const res = await fetch(`https://api.github.com/gists/${gistId}`, {
+            headers: { 'Authorization': `token ${GITHUB_TOKEN}`, 'Accept': 'application/vnd.github.v3+json' }
+        });
+        if (!res.ok) throw new Error(await res.text());
+        const gist = await res.json();
+        const file = gist.files['workflow_data.json'];
+        if (!file) throw new Error('Không tìm thấy file workflow_data.json trong Gist');
+        const content = JSON.parse(file.content);
+        // Gán lại dữ liệu
+        steps = content.steps || [];
+        edges = content.edges || [];
+        companies = content.companies || [];
+        notes = content.notes || [];
+        saveAll();  // lưu xuống localStorage
+        // Làm mới toàn bộ giao diện
+        refreshAllGraphs();
+        renderCompanyList();
+        renderAdmin();
+        if (selStep1) renderPanel1(selStep1);
+        if (selStep2) renderPanel2(selStep2);
+        alert('Tải thành công!');
+    } catch (err) {
+        alert('Lỗi tải Gist: ' + err.message);
+    }
+}
+
+function loadAll() {
+    try {
+        const s = localStorage.getItem('wf2_steps');
+        const e = localStorage.getItem('wf2_edges');
+        const c = localStorage.getItem('wf2_companies');
+        const n = localStorage.getItem('wf2_notes');
+        steps     = s ? JSON.parse(s) : [];
+        edges     = e ? JSON.parse(e) : [];
+        companies = c ? JSON.parse(c) : [];
+        notes     = n ? JSON.parse(n) : [];
+    } catch(e) {
+        console.warn('Load error:', e);
+        steps = []; edges = []; companies = []; notes = [];
+    }
+    if (!steps.length)     initDefaultSteps();
+    if (!companies.length) initDefaultCompanies();
+    if (!notes.length)     initDefaultNotes();
+    if (!selCompany && companies.length) selCompany = companies[0].id;
+    if (!selStep1   && steps.length)     selStep1   = steps[0].id;
+}
+
+// ── default data ──
+function initDefaultSteps() {
+    steps = [
+        { id:"step_nhan_ho_so",      name:"Nhận hồ sơ",                major:"1. Tiếp nhận",  desc:"Tiếp nhận hồ sơ từ khách hàng, kiểm tra sơ bộ." },
+        { id:"step_kiem_tra",        name:"Kiểm tra tính hợp lệ",      major:"1. Tiếp nhận",  desc:"Xác minh đủ thành phần, mẫu mã hồ sơ." },
+        { id:"step_bo_sung",         name:"Bổ sung hồ sơ",             major:"1. Tiếp nhận",  desc:"Yêu cầu KH bổ sung tài liệu còn thiếu." },
+        { id:"step_phan_tich",       name:"Phân tích sơ bộ",           major:"2. Thẩm định",  desc:"Nhận xét ban đầu, phân loại hồ sơ." },
+        { id:"step_tham_dinh",       name:"Thẩm định chuyên sâu",      major:"2. Thẩm định",  desc:"Phân tích kỹ thuật, tài chính, pháp lý." },
+        { id:"step_danh_gia_rui_ro", name:"Đánh giá rủi ro",           major:"2. Thẩm định",  desc:"Xác định và định lượng rủi ro tiềm ẩn." },
+        { id:"step_phe_duyet_cap1",  name:"Phê duyệt cấp 1",           major:"3. Phê duyệt",  desc:"Trình lên quản lý cấp trung." },
+        { id:"step_phe_duyet_cap2",  name:"Phê duyệt cấp 2",           major:"3. Phê duyệt",  desc:"Ban giám đốc phê duyệt cuối." },
+        { id:"step_lap_ke_hoach",    name:"Lập kế hoạch triển khai",   major:"4. Triển khai", desc:"Xây dựng timeline và phân công nguồn lực." },
+        { id:"step_thuc_hien",       name:"Thực hiện & giám sát",      major:"4. Triển khai", desc:"Thực thi các hạng mục theo kế hoạch." },
+        { id:"step_dieu_chinh",      name:"Điều chỉnh kế hoạch",       major:"4. Triển khai", desc:"Xử lý phát sinh, cập nhật kế hoạch." },
+        { id:"step_nghiem_thu",      name:"Kiểm tra nghiệm thu",       major:"5. Bàn giao",   desc:"Kiểm tra chất lượng đầu ra trước bàn giao." },
+        { id:"step_ban_giao",        name:"Bàn giao & kết thúc",       major:"5. Bàn giao",   desc:"Ký biên bản, lưu hồ sơ, đóng dự án." }
+    ];
+    edges = [
+        { from:"step_nhan_ho_so",      to:"step_kiem_tra",        label:"hồ sơ đến" },
+        { from:"step_kiem_tra",        to:"step_bo_sung",         label:"thiếu hồ sơ" },
+        { from:"step_kiem_tra",        to:"step_phan_tich",       label:"đủ điều kiện" },
+        { from:"step_bo_sung",         to:"step_kiem_tra",        label:"bổ sung xong" },
+        { from:"step_phan_tich",       to:"step_tham_dinh",       label:"bình thường" },
+        { from:"step_phan_tich",       to:"step_danh_gia_rui_ro", label:"có rủi ro" },
+        { from:"step_tham_dinh",       to:"step_phe_duyet_cap1",  label:"hoàn tất" },
+        { from:"step_danh_gia_rui_ro", to:"step_tham_dinh",       label:"đã xử lý" },
+        { from:"step_phe_duyet_cap1",  to:"step_phe_duyet_cap2",  label:"đồng ý" },
+        { from:"step_phe_duyet_cap1",  to:"step_danh_gia_rui_ro", label:"từ chối" },
+        { from:"step_phe_duyet_cap2",  to:"step_lap_ke_hoach",    label:"phê duyệt" },
+        { from:"step_lap_ke_hoach",    to:"step_thuc_hien",       label:"bắt đầu" },
+        { from:"step_thuc_hien",       to:"step_dieu_chinh",      label:"phát sinh" },
+        { from:"step_thuc_hien",       to:"step_nghiem_thu",      label:"hoàn thành" },
+        { from:"step_dieu_chinh",      to:"step_thuc_hien",       label:"điều chỉnh xong" },
+        { from:"step_nghiem_thu",      to:"step_ban_giao",        label:"nghiệm thu đạt" }
+    ];
+}
+function initDefaultCompanies() {
+    companies = [
+        { id:"comp1", name:"ABC Technology" },
+        { id:"comp2", name:"XYZ Solutions" },
+        { id:"comp3", name:"Greenfield Corp" }
+    ];
+}
+function initDefaultNotes() {
+    notes = [
+        { id:"n1", companyId:"comp1", stepId:"step_nhan_ho_so",  memo:"Gửi bản cứng qua bưu điện", filePath:"https://drive.example/HD", otherNote:"Cần mộc đỏ" },
+        { id:"n2", companyId:"comp1", stepId:"step_phan_tich",   memo:"Liên hệ phòng kinh doanh trước", filePath:"https://sharepoint/ABC", otherNote:"Dùng mẫu A12" },
+        { id:"n3", companyId:"comp2", stepId:"step_kiem_tra",    memo:"Yêu cầu giấy phép con bổ sung", filePath:"", otherNote:"Mất 2 ngày làm việc" }
+    ];
+}
+
+// ═══════════════════════════════════════════════════
+//  CYTOSCAPE HELPERS
+// ═══════════════════════════════════════════════════
+
+// Major → color group
+const MAJOR_COLORS = [
+    { bg:'#dbeafe', border:'#3b82f6' },  // 0
+    { bg:'#d1fae5', border:'#10b981' },  // 1
+    { bg:'#ede9fe', border:'#7c3aed' },  // 2
+    { bg:'#fee2e2', border:'#ef4444' },  // 3
+    { bg:'#fce7f3', border:'#ec4899' },  // 4
+];
+const majorColorMap = {};
+function getMajorColor(major) {
+    if (!majorColorMap[major]) {
+        const idx = Object.keys(majorColorMap).length % MAJOR_COLORS.length;
+        majorColorMap[major] = MAJOR_COLORS[idx];
+    }
+    return majorColorMap[major];
+}
+
+function buildCyElements(highlightId, companyId) {
+    const els = [];
+
+    steps.forEach(step => {
+        const col = getMajorColor(step.major);
+        const hasNote = companyId && notes.some(n => n.companyId === companyId && n.stepId === step.id);
+        const isHighlight = step.id === highlightId;
+
+        els.push({
+            group: 'nodes',
+            data: {
+                id: step.id,
+                label: (step.major.match(/^\d+\./) || [''])[0] + ' ' + step.name,
+                name: step.name,
+                major: step.major,
+                bg: isHighlight ? '#1a5fb4' : hasNote ? '#e8b200' : col.bg,
+                border: isHighlight ? '#0d3b8a' : hasNote ? '#a07800' : col.border,
+                textColor: isHighlight ? '#ffffff' : hasNote ? '#3a2500' : '#0d1b2a'
+            }
+        });
+    });
+
+    edges.forEach((edge, i) => {
+        const src = steps.find(s => s.id === edge.from);
+        const tgt = steps.find(s => s.id === edge.to);
+        if (!src || !tgt) return;
+        els.push({
+            group: 'edges',
+            data: {
+                id: 'e_' + i,
+                source: edge.from,
+                target: edge.to,
+                label: edge.label || ''
+            }
+        });
+    });
+
+    return els;
+}
+
+const CY_STYLE = [
+    {
+        selector: 'node',
+        style: {
+            'label':            'data(label)',
+            'background-color': 'data(bg)',
+            'border-color':     'data(border)',
+            'border-width':     2,
+            'color':            'data(textColor)',
+            'shape':            'round-rectangle',
+            'width':            170,
+            'height':           60,
+            'text-valign':      'center',
+            'text-halign':      'center',
+            'text-wrap':        'wrap',
+            'text-max-width':   155,
+            'font-family':      'Be Vietnam Pro, sans-serif',
+            'font-size':        '11px',
+            'font-weight':      '500',
+            'padding':          '10px',
+            'transition-property': 'background-color border-color border-width',
+            'transition-duration': '0.15s'
+        }
+    },
+    {
+        selector: 'node:selected',
+        style: {
+            'border-width': 3,
+            'border-color': '#0d3b8a',
+            'background-color': '#1a5fb4',
+            'color': '#ffffff'
+        }
+    },
+    {
+        selector: 'edge',
+        style: {
+            'curve-style':          'bezier',
+            'target-arrow-shape':   'triangle',
+            'arrow-scale':          1.1,
+            'width':                1.8,
+            'line-color':           '#94a3b8',
+            'target-arrow-color':   '#94a3b8',
+            'label':                'data(label)',
+            'font-size':            '9px',
+            'font-family':          'Be Vietnam Pro, sans-serif',
+            'color':                '#64748b',
+            'text-rotation':        'autorotate',
+            'text-background-color':'#ffffff',
+            'text-background-opacity': 0.85,
+            'text-background-padding': '2px'
+        }
+    }
+];
+
+const DAGRE_LAYOUT = {
+    name: 'dagre',
+    rankDir: 'TB',
+    spacingFactor: 1.25,
+    nodeSep: 55,
+    rankSep: 65,
+    padding: 30
+};
+
+function createCy(containerId, highlightId, companyId, onTap) {
+    const container = document.getElementById(containerId);
+    if (!container) return null;
+
+    const instance = cytoscape({
+        container,
+        elements: buildCyElements(highlightId, companyId),
+        style: CY_STYLE,
+        layout: DAGRE_LAYOUT,
+        userZoomingEnabled: true,
+        userPanningEnabled: true,
+        boxSelectionEnabled: false,
+        minZoom: 0.3,
+        maxZoom: 3
+        // grabbing is ON by default — no need to touch grabify/ungrabify
+    });
+
+    instance.on('tap', 'node', evt => onTap(evt.target.id()));
+
+    return instance;
+}
+
+function runDagre(cy) {
+    if (!cy) return;
+    cy.layout(DAGRE_LAYOUT).run();
+}
+
+// update existing cy without destroying: swap elements, re-style
+function updateCyData(cy, highlightId, companyId) {
+    if (!cy) return;
+    const els = buildCyElements(highlightId, companyId);
+    cy.batch(() => {
+        // preserve positions of existing nodes
+        const positions = {};
+        cy.nodes().forEach(n => { positions[n.id()] = n.position(); });
+
+        cy.elements().remove();
+
+        // add nodes first
+        const nodeEls = els.filter(e => e.group === 'nodes');
+        const edgeEls = els.filter(e => e.group === 'edges');
+        cy.add(nodeEls);
+        cy.add(edgeEls);
+
+        // restore saved positions if node existed before
+        cy.nodes().forEach(n => {
+            if (positions[n.id()]) n.position(positions[n.id()]);
+        });
+    });
+    cy.style(CY_STYLE);
+}
+
+document.getElementById('upload-gist').addEventListener('click', () => {
+    const gistId = document.getElementById('gist-id').value.trim() || null;
+    uploadToGist(gistId);
+});
+document.getElementById('download-gist').addEventListener('click', () => {
+    const gistId = document.getElementById('gist-id').value.trim();
+    downloadFromGist(gistId);
+});
+
+// ═══════════════════════════════════════════════════
+//  TAB 1
+// ═══════════════════════════════════════════════════
+function initTab1() {
+    if (cy1) { cy1.destroy(); cy1 = null; }
+    cy1 = createCy('cy1', selStep1, null, stepId => {
+        selStep1 = stepId;
+        updateCyData(cy1, selStep1, null);
+        renderPanel1(stepId);
+    });
+}
+
+function renderPanel1(stepId) {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    const rel = notes.filter(n => n.stepId === stepId);
+    let html = `<div style="font-weight:700;margin-bottom:8px;">${esc(step.major)} → ${esc(step.name)}</div>`;
+    if (step.desc) html += `<div style="font-size:.85rem;color:var(--text-2);margin-bottom:10px;">${esc(step.desc)}</div>`;
+    if (!rel.length) {
+        html += `<div class="empty-hint">📭 Chưa có lưu ý cho bước này.</div>`;
+    } else {
+        rel.forEach(n => {
+            const cName = companies.find(c => c.id === n.companyId)?.name || '?';
+            html += `<div class="note-card">
+                <span class="company-tag"><i class="fas fa-building"></i> ${esc(cName)}</span><br>
+                ${n.memo    ? `📝 ${esc(n.memo)}<br>`   : ''}
+                ${n.filePath? `📁 <a href="${esc(n.filePath)}" target="_blank" rel="noopener">${esc(n.filePath)}</a><br>` : ''}
+                ${n.otherNote? `✏️ ${esc(n.otherNote)}`  : ''}
+            </div>`;
+        });
+    }
+    document.getElementById('panel1-content').innerHTML = html;
+    document.getElementById('panel1').querySelector('.panel-title').textContent = '📌 Lưu ý cho: ' + step.name;
+}
+
+document.getElementById('btn-reset-layout1').addEventListener('click', () => runDagre(cy1));
+document.getElementById('btn-fit1').addEventListener('click', () => cy1 && cy1.fit(undefined, 30));
+
+// ═══════════════════════════════════════════════════
+//  TAB 2
+// ═══════════════════════════════════════════════════
+function initTab2() {
+    if (cy2) { cy2.destroy(); cy2 = null; }
+    if (!selCompany) return;
+    cy2 = createCy('cy2', selStep2, selCompany, stepId => {
+        selStep2 = stepId;
+        updateCyData(cy2, selStep2, selCompany);
+        renderPanel2(stepId);
+    });
+}
+
+function renderPanel2(stepId) {
+    const step = steps.find(s => s.id === stepId);
+    if (!step) return;
+    const company = companies.find(c => c.id === selCompany);
+    const cn = notes.filter(n => n.companyId === selCompany && n.stepId === stepId);
+
+    const panel = document.getElementById('panel2');
+    panel.style.display = 'block';
+    document.getElementById('panel2-title').textContent = `📌 ${company?.name} — ${step.name}`;
+
+    let html = '';
+    if (!cn.length) {
+        html = `<div class="empty-hint">Chưa có lưu ý. <button class="btn btn-primary btn-sm" onclick="openModal(null,'${esc(selCompany)}','${esc(stepId)}')"><i class="fas fa-plus"></i> Thêm lưu ý</button></div>`;
+    } else {
+        cn.forEach(n => {
+            html += `<div class="note-card">
+                ${n.memo     ? `📝 ${esc(n.memo)}<br>`   : ''}
+                ${n.filePath ? `📁 <a href="${esc(n.filePath)}" target="_blank" rel="noopener">${esc(n.filePath)}</a><br>` : ''}
+                ${n.otherNote? `✏️ ${esc(n.otherNote)}<br>` : ''}
+                <div style="margin-top:6px;display:flex;gap:6px;">
+                    <button class="btn btn-secondary btn-sm" onclick="openModal('${n.id}','${esc(selCompany)}','${esc(stepId)}')">✏️ Sửa</button>
+                    <button class="btn btn-danger btn-sm" onclick="deleteNote('${n.id}')">🗑️ Xóa</button>
+                </div>
+            </div>`;
+        });
+        html += `<button class="btn btn-secondary btn-sm" onclick="openModal(null,'${esc(selCompany)}','${esc(stepId)}')"><i class="fas fa-plus"></i> Thêm lưu ý khác</button>`;
+    }
+    document.getElementById('panel2-content').innerHTML = html;
+}
+
+function renderCompanyList() {
+    const wrap = document.getElementById('company-list');
+    wrap.innerHTML = '';
+    companies.forEach(c => {
+        const el = document.createElement('div');
+        el.className = 'company-badge' + (c.id === selCompany ? ' selected' : '');
+        el.innerHTML = `<i class="fas fa-building"></i>${esc(c.name)}<i class="fas fa-times-circle del-ico" title="Xóa công ty" data-cid="${c.id}"></i>`;
+        el.addEventListener('click', e => {
+            const delBtn = e.target.closest('[data-cid]');
+            if (delBtn) {
+                if (!confirm(`Xóa công ty "${c.name}" và toàn bộ lưu ý liên quan?`)) return;
+                companies = companies.filter(x => x.id !== c.id);
+                notes     = notes.filter(n => n.companyId !== c.id);
+                if (selCompany === c.id) selCompany = companies[0]?.id || null;
+                saveAll(); renderCompanyList(); initTab2();
+            } else {
+                selCompany = c.id;
+                selStep2   = null;
+                renderCompanyList();
+                initTab2();
+                document.getElementById('panel2').style.display = 'none';
+            }
+        });
+        wrap.appendChild(el);
+    });
+}
+
+document.getElementById('btn-add-company').addEventListener('click', () => {
+    const inp = document.getElementById('inp-new-company');
+    const name = inp.value.trim();
+    if (!name) return;
+    companies.push({ id: uid(), name });
+    saveAll(); renderCompanyList(); inp.value = '';
+});
+document.getElementById('btn-reset-layout2').addEventListener('click', () => runDagre(cy2));
+document.getElementById('btn-fit2').addEventListener('click', () => cy2 && cy2.fit(undefined, 30));
+
+// ═══════════════════════════════════════════════════
+//  NOTE MODAL
+// ═══════════════════════════════════════════════════
+function openModal(noteId, companyId, stepId) {
+    modalMeta = { noteId, companyId, stepId };
+    const existing = noteId ? notes.find(n => n.id === noteId) : null;
+    document.getElementById('modal-title').textContent = existing ? 'Sửa lưu ý' : 'Thêm lưu ý';
+    document.getElementById('modal-memo').value  = existing?.memo      || '';
+    document.getElementById('modal-file').value  = existing?.filePath  || '';
+    document.getElementById('modal-other').value = existing?.otherNote || '';
+    document.getElementById('note-modal').classList.add('open');
+}
+
+document.getElementById('modal-cancel').addEventListener('click', () => {
+    document.getElementById('note-modal').classList.remove('open');
+});
+document.getElementById('note-modal').addEventListener('click', e => {
+    if (e.target === document.getElementById('note-modal'))
+        document.getElementById('note-modal').classList.remove('open');
+});
+
+document.getElementById('modal-save').addEventListener('click', () => {
+    const memo  = document.getElementById('modal-memo').value.trim();
+    const file  = document.getElementById('modal-file').value.trim();
+    const other = document.getElementById('modal-other').value.trim();
+    const { noteId, companyId, stepId } = modalMeta;
+
+    if (noteId) {
+        const n = notes.find(x => x.id === noteId);
+        if (n) { n.memo = memo; n.filePath = file; n.otherNote = other; }
+    } else {
+        notes.push({ id: uid(), companyId, stepId, memo, filePath: file, otherNote: other });
+    }
+    saveAll();
+    document.getElementById('note-modal').classList.remove('open');
+    // refresh whichever panel is active
+    if (selStep2) { updateCyData(cy2, selStep2, selCompany); renderPanel2(selStep2); }
+    if (selStep1) renderPanel1(selStep1);
+});
+
+function deleteNote(noteId) {
+    if (!confirm('Xóa lưu ý này?')) return;
+    notes = notes.filter(n => n.id !== noteId);
+    saveAll();
+    if (selStep2) { updateCyData(cy2, selStep2, selCompany); renderPanel2(selStep2); }
+}
+
+// ═══════════════════════════════════════════════════
+//  TAB 3 — ADMIN
+// ═══════════════════════════════════════════════════
+function renderAdmin() {
+    // steps list
+    const sl = document.getElementById('list-steps');
+    sl.innerHTML = '';
+    steps.forEach(step => {
+        const d = document.createElement('div');
+        d.className = 'list-item';
+        d.innerHTML = `<span class="label" title="${esc(step.id)}">${esc(step.major)} / ${esc(step.name)}</span>
+            <button class="btn btn-secondary btn-sm edit-step-btn" data-id="${step.id}">✏️</button>`;
+        sl.appendChild(d);
+    });
+    sl.querySelectorAll('.edit-step-btn').forEach(btn => {
+        btn.addEventListener('click', () => openEditStep(btn.dataset.id));
+    });
+
+    // edges list
+    const el = document.getElementById('list-edges');
+    el.innerHTML = '';
+    edges.forEach((edge, idx) => {
+        const fn = steps.find(s => s.id === edge.from)?.name || edge.from;
+        const tn = steps.find(s => s.id === edge.to)?.name   || edge.to;
+        const d  = document.createElement('div');
+        d.className = 'list-item';
+        d.innerHTML = `<span class="label">${esc(fn)} → ${esc(tn)}${edge.label ? ' ['+esc(edge.label)+']':''}</span>
+            <button class="btn btn-danger btn-sm del-edge-btn" data-idx="${idx}">🗑️</button>`;
+        el.appendChild(d);
+    });
+    el.querySelectorAll('.del-edge-btn').forEach(btn => {
+        btn.addEventListener('click', () => {
+            if (!confirm('Xóa đường nối này?')) return;
+            edges.splice(Number(btn.dataset.idx), 1);
+            saveAll(); renderAdmin(); refreshAllGraphs();
+        });
+    });
+}
+
+function openEditStep(id) {
+    const step = steps.find(s => s.id === id);
+    if (!step) return;
+    document.getElementById('edit-step-id').value    = step.id;
+    document.getElementById('edit-step-name').value  = step.name;
+    document.getElementById('edit-step-major').value = step.major;
+    document.getElementById('edit-step-desc').value  = step.desc || '';
+    document.getElementById('form-edit-step').style.display = 'block';
+    document.getElementById('form-add-edge').style.display  = 'none';
+}
+
+document.getElementById('btn-update-step').addEventListener('click', () => {
+    const id   = document.getElementById('edit-step-id').value;
+    const step = steps.find(s => s.id === id);
+    if (!step) return;
+    step.name  = document.getElementById('edit-step-name').value.trim()  || step.name;
+    step.major = document.getElementById('edit-step-major').value.trim() || step.major;
+    step.desc  = document.getElementById('edit-step-desc').value.trim();
+    saveAll(); renderAdmin(); refreshAllGraphs();
+    document.getElementById('form-edit-step').style.display = 'none';
+});
+
+document.getElementById('btn-delete-step').addEventListener('click', () => {
+    const id = document.getElementById('edit-step-id').value;
+    if (!confirm('Xóa bước sẽ xóa mọi đường nối và lưu ý liên quan. Tiếp tục?')) return;
+    steps     = steps.filter(s => s.id !== id);
+    edges     = edges.filter(e => e.from !== id && e.to !== id);
+    notes     = notes.filter(n => n.stepId !== id);
+    if (selStep1 === id) selStep1 = steps[0]?.id || null;
+    if (selStep2 === id) selStep2 = null;
+    saveAll(); renderAdmin(); refreshAllGraphs();
+    document.getElementById('form-edit-step').style.display = 'none';
+});
+
+document.getElementById('btn-cancel-edit-step').addEventListener('click', () => {
+    document.getElementById('form-edit-step').style.display = 'none';
+});
+
+document.getElementById('btn-add-step').addEventListener('click', () => {
+    document.getElementById('form-add-step').style.display = 'block';
+    document.getElementById('form-edit-step').style.display = 'none';
+    document.getElementById('form-add-edge').style.display  = 'none';
+    document.getElementById('new-step-name').value  = '';
+    document.getElementById('new-step-major').value = '';
+    document.getElementById('new-step-desc').value  = '';
+    document.getElementById('new-step-name').focus();
+});
+
+document.getElementById('btn-save-new-step').addEventListener('click', () => {
+    const name  = document.getElementById('new-step-name').value.trim();
+    const major = document.getElementById('new-step-major').value.trim() || '1. Tiếp nhận';
+    const desc  = document.getElementById('new-step-desc').value.trim();
+    if (!name) { document.getElementById('new-step-name').focus(); return; }
+    steps.push({ id: uid(), name, major, desc });
+    saveAll(); renderAdmin(); refreshAllGraphs();
+    document.getElementById('form-add-step').style.display = 'none';
+});
+
+document.getElementById('btn-cancel-new-step').addEventListener('click', () => {
+    document.getElementById('form-add-step').style.display = 'none';
+});
+
+document.getElementById('btn-add-edge').addEventListener('click', () => {
+    const fs = document.getElementById('edge-from');
+    const ts = document.getElementById('edge-to');
+    fs.innerHTML = ''; ts.innerHTML = '';
+    steps.forEach(s => {
+        const o = new Option(`${s.major} / ${s.name}`, s.id);
+        fs.add(o.cloneNode(true)); ts.add(o);
+    });
+    document.getElementById('edge-label').value = '';
+    document.getElementById('form-add-edge').style.display = 'block';
+    document.getElementById('form-edit-step').style.display = 'none';
+});
+
+document.getElementById('btn-save-edge').addEventListener('click', () => {
+    const from  = document.getElementById('edge-from').value;
+    const to    = document.getElementById('edge-to').value;
+    const label = document.getElementById('edge-label').value.trim();
+    if (!from || !to || from === to) { alert('Vui lòng chọn hai bước khác nhau.'); return; }
+    edges.push({ from, to, label });
+    saveAll(); renderAdmin(); refreshAllGraphs();
+    document.getElementById('form-add-edge').style.display = 'none';
+});
+
+document.getElementById('btn-cancel-edge').addEventListener('click', () => {
+    document.getElementById('form-add-edge').style.display = 'none';
+});
+
+function refreshAllGraphs() {
+    if (cy1) { updateCyData(cy1, selStep1, null); }
+    if (cy2) { updateCyData(cy2, selStep2, selCompany); }
+}
+
+// ═══════════════════════════════════════════════════
+//  TAB SWITCHING
+// ═══════════════════════════════════════════════════
+let currentTab = 'tab1';
+document.querySelectorAll('.tab-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        const tabId = btn.dataset.tab;
+        if (tabId === currentTab) return;
+        currentTab = tabId;
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        document.querySelectorAll('.tab-pane').forEach(p => p.classList.remove('active-pane'));
+        document.getElementById(tabId).classList.add('active-pane');
+
+        if (tabId === 'tab1') {
+            // Re-init so cy gets correct dimensions after display:none → block
+            if (!cy1) initTab1();
+            else { cy1.resize(); cy1.fit(undefined, 30); }
+        }
+        if (tabId === 'tab2') {
+            renderCompanyList();
+            if (!cy2) initTab2();
+            else { cy2.resize(); cy2.fit(undefined, 30); }
+        }
+        if (tabId === 'tab3') renderAdmin();
+    });
+});
+
+// ═══════════════════════════════════════════════════
+//  BOOT
+// ═══════════════════════════════════════════════════
+loadAll();
+// register dagre layout
+cytoscape.use(cytoscapeDagre);
+
+initTab1();
+renderCompanyList();
+renderAdmin();
+</script>
+</body>
+</html>
