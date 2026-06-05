@@ -336,7 +336,7 @@ let nodePositions = { cy1: {}, cy2: {} };
 let selStep1    = null;   // selected step id in tab1
 let selCompany  = null;   // selected company id in tab2
 let selStep2    = null;   // selected step id in tab2
-
+const DEFAULT_POSITIONS_CY1 = {"s1_nhan_chung_tu":{"x":41,"y":-168},"s1_tao_theo_doi_lo_hang":{"x":-262,"y":-1},"s1_kiem_tra_chung_tu":{"x":44,"y":0},"s1_kiem_tra_dinh_muc":{"x":335,"y":-2},"s1_kiem_tra_tru_lui":{"x":614,"y":-4},"s1_phu_luc_x":{"x":616,"y":133},"s1_nhap_tru_lui":{"x":621,"y":282},"s2_tao_data_lo_hang":{"x":-90,"y":138},"s2_bang_ke_can_lam":{"x":-90,"y":283},"s2_tru_lui":{"x":327,"y":474},"s2_kiem_tra_tieu_chi":{"x":331,"y":674},"s2_bao_khach":{"x":66,"y":678},"s2_tao_bang_ke":{"x":639,"y":675},"s3_tao_file_ecosys":{"x":-80,"y":870},"s3_khai_ecosys":{"x":263,"y":871},"s3_check_ecosys":{"x":641,"y":864},"s3_up_chung_tu_ky_so":{"x":645,"y":1058},"s4_nop_tien":{"x":269,"y":1055},"s4_theo_doi_co":{"x":-264,"y":1048},"s4_bo_sung_giai_trinh":{"x":-659,"y":1048},"s4_gui_co_khach_hang":{"x":-25,"y":1216},"s4_chot_debit":{"x":-23,"y":1398},"s4_chot_tru_lui_thang":{"x":624,"y":469},"s5_tao_file_in":{"x":649,"y":1248},"s5_in_chung_tu":{"x":651,"y":1430}};
 let cy1 = null;
 let cy2 = null;
 
@@ -877,6 +877,10 @@ function saveNodePositions(cy, key) {
 // Khôi phục vị trí bằng layout preset (nếu có), trả về true nếu thành công
 function applyPresetLayout(cy, key) {
     let positions = null;
+
+    // Ưu tiên 0: default hardcoded (chỉ dùng cho cy1)
+    if (key === 'cy1_positions' && !localStorage.getItem(key) && !nodePositions[key]) {
+        positions = DEFAULT_POSITIONS_CY1;
 
     // Ưu tiên 1: Dùng biến toàn cục nodePositions (đã tải từ Gist)
     if (nodePositions && nodePositions[key]) {
