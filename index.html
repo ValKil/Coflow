@@ -471,41 +471,246 @@ function loadAll() {
 }
 
 // ── default data ──
+//function initDefaultSteps() {
+//    steps = [
+//        { id:"step_nhan_ho_so",      name:"Nhận hồ sơ",                major:"1. Tiếp nhận",  desc:"Tiếp nhận hồ sơ từ khách hàng, kiểm tra sơ bộ." },
+//        { id:"step_kiem_tra",        name:"Kiểm tra tính hợp lệ",      major:"1. Tiếp nhận",  desc:"Xác minh đủ thành phần, mẫu mã hồ sơ." },
+//        { id:"step_bo_sung",         name:"Bổ sung hồ sơ",             major:"1. Tiếp nhận",  desc:"Yêu cầu KH bổ sung tài liệu còn thiếu." },
+//        { id:"step_phan_tich",       name:"Phân tích sơ bộ",           major:"2. Thẩm định",  desc:"Nhận xét ban đầu, phân loại hồ sơ." },
+//        { id:"step_tham_dinh",       name:"Thẩm định chuyên sâu",      major:"2. Thẩm định",  desc:"Phân tích kỹ thuật, tài chính, pháp lý." },
+//        { id:"step_danh_gia_rui_ro", name:"Đánh giá rủi ro",           major:"2. Thẩm định",  desc:"Xác định và định lượng rủi ro tiềm ẩn." },
+//        { id:"step_phe_duyet_cap1",  name:"Phê duyệt cấp 1",           major:"3. Phê duyệt",  desc:"Trình lên quản lý cấp trung." },
+//        { id:"step_phe_duyet_cap2",  name:"Phê duyệt cấp 2",           major:"3. Phê duyệt",  desc:"Ban giám đốc phê duyệt cuối." },
+//        { id:"step_lap_ke_hoach",    name:"Lập kế hoạch triển khai",   major:"4. Triển khai", desc:"Xây dựng timeline và phân công nguồn lực." },
+//        { id:"step_thuc_hien",       name:"Thực hiện & giám sát",      major:"4. Triển khai", desc:"Thực thi các hạng mục theo kế hoạch." },
+//        { id:"step_dieu_chinh",      name:"Điều chỉnh kế hoạch",       major:"4. Triển khai", desc:"Xử lý phát sinh, cập nhật kế hoạch." },
+//        { id:"step_nghiem_thu",      name:"Kiểm tra nghiệm thu",       major:"5. Bàn giao",   desc:"Kiểm tra chất lượng đầu ra trước bàn giao." },
+//        { id:"step_ban_giao",        name:"Bàn giao & kết thúc",       major:"5. Bàn giao",   desc:"Ký biên bản, lưu hồ sơ, đóng dự án." }
+//    ];
+//    edges = [
+//        { from:"step_nhan_ho_so",      to:"step_kiem_tra",        label:"hồ sơ đến" },
+//        { from:"step_kiem_tra",        to:"step_bo_sung",         label:"thiếu hồ sơ" },
+//        { from:"step_kiem_tra",        to:"step_phan_tich",       label:"đủ điều kiện" },
+//        { from:"step_bo_sung",         to:"step_kiem_tra",        label:"bổ sung xong" },
+//        { from:"step_phan_tich",       to:"step_tham_dinh",       label:"bình thường" },
+//        { from:"step_phan_tich",       to:"step_danh_gia_rui_ro", label:"có rủi ro" },
+//        { from:"step_tham_dinh",       to:"step_phe_duyet_cap1",  label:"hoàn tất" },
+//        { from:"step_danh_gia_rui_ro", to:"step_tham_dinh",       label:"đã xử lý" },
+//        { from:"step_phe_duyet_cap1",  to:"step_phe_duyet_cap2",  label:"đồng ý" },
+//        { from:"step_phe_duyet_cap1",  to:"step_danh_gia_rui_ro", label:"từ chối" },
+//        { from:"step_phe_duyet_cap2",  to:"step_lap_ke_hoach",    label:"phê duyệt" },
+//        { from:"step_lap_ke_hoach",    to:"step_thuc_hien",       label:"bắt đầu" },
+//        { from:"step_thuc_hien",       to:"step_dieu_chinh",      label:"phát sinh" },
+//        { from:"step_thuc_hien",       to:"step_nghiem_thu",      label:"hoàn thành" },
+//        { from:"step_dieu_chinh",      to:"step_thuc_hien",       label:"điều chỉnh xong" },
+//        { from:"step_nghiem_thu",      to:"step_ban_giao",        label:"nghiệm thu đạt" }
+//    ];
+//}
+
 function initDefaultSteps() {
     steps = [
-        { id:"step_nhan_ho_so",      name:"Nhận hồ sơ",                major:"1. Tiếp nhận",  desc:"Tiếp nhận hồ sơ từ khách hàng, kiểm tra sơ bộ." },
-        { id:"step_kiem_tra",        name:"Kiểm tra tính hợp lệ",      major:"1. Tiếp nhận",  desc:"Xác minh đủ thành phần, mẫu mã hồ sơ." },
-        { id:"step_bo_sung",         name:"Bổ sung hồ sơ",             major:"1. Tiếp nhận",  desc:"Yêu cầu KH bổ sung tài liệu còn thiếu." },
-        { id:"step_phan_tich",       name:"Phân tích sơ bộ",           major:"2. Thẩm định",  desc:"Nhận xét ban đầu, phân loại hồ sơ." },
-        { id:"step_tham_dinh",       name:"Thẩm định chuyên sâu",      major:"2. Thẩm định",  desc:"Phân tích kỹ thuật, tài chính, pháp lý." },
-        { id:"step_danh_gia_rui_ro", name:"Đánh giá rủi ro",           major:"2. Thẩm định",  desc:"Xác định và định lượng rủi ro tiềm ẩn." },
-        { id:"step_phe_duyet_cap1",  name:"Phê duyệt cấp 1",           major:"3. Phê duyệt",  desc:"Trình lên quản lý cấp trung." },
-        { id:"step_phe_duyet_cap2",  name:"Phê duyệt cấp 2",           major:"3. Phê duyệt",  desc:"Ban giám đốc phê duyệt cuối." },
-        { id:"step_lap_ke_hoach",    name:"Lập kế hoạch triển khai",   major:"4. Triển khai", desc:"Xây dựng timeline và phân công nguồn lực." },
-        { id:"step_thuc_hien",       name:"Thực hiện & giám sát",      major:"4. Triển khai", desc:"Thực thi các hạng mục theo kế hoạch." },
-        { id:"step_dieu_chinh",      name:"Điều chỉnh kế hoạch",       major:"4. Triển khai", desc:"Xử lý phát sinh, cập nhật kế hoạch." },
-        { id:"step_nghiem_thu",      name:"Kiểm tra nghiệm thu",       major:"5. Bàn giao",   desc:"Kiểm tra chất lượng đầu ra trước bàn giao." },
-        { id:"step_ban_giao",        name:"Bàn giao & kết thúc",       major:"5. Bàn giao",   desc:"Ký biên bản, lưu hồ sơ, đóng dự án." }
+        // 1. Nhận thông tin từ khách hàng
+        {
+            id: "s1_nhan_chung_tu",
+            name: "1. Nhận chứng từ",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_tao_theo_doi_lo_hang",
+            name: "2. Tạo theo dõi lô hàng",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_kiem_tra_chung_tu",
+            name: "3. Kiểm tra chứng từ",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_kiem_tra_dinh_muc",
+            name: "4. Kiểm tra định mức",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_kiem_tra_tru_lui",
+            name: "5. Kiểm tra trừ lùi / tờ khai / VAT hàng nhập",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_phu_luc_x",
+            name: "6. Phụ lục X",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+        {
+            id: "s1_nhap_tru_lui",
+            name: "7. Nhập trừ lùi",
+            major: "1. Nhận thông tin từ khách hàng",
+            desc: ""
+        },
+
+        // 2. Làm bảng kê
+        {
+            id: "s2_tao_data_lo_hang",
+            name: "1. Tạo data thông tin lô hàng",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+        {
+            id: "s2_bang_ke_can_lam",
+            name: "2. Bảng kê cần làm",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+        {
+            id: "s2_tru_lui",
+            name: "3. Trừ lùi",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+        {
+            id: "s2_kiem_tra_tieu_chi",
+            name: "4. Kiểm tra đạt tiêu chí",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+        {
+            id: "s2_bao_khach",
+            name: "Báo khách",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+        {
+            id: "s2_tao_bang_ke",
+            name: "5. Tạo bảng kê",
+            major: "2. Làm bảng kê",
+            desc: ""
+        },
+
+        // 3. Ecosys
+        {
+            id: "s3_tao_file_ecosys",
+            name: "1. Tạo file khai Ecosys",
+            major: "3. Ecosys",
+            desc: ""
+        },
+        {
+            id: "s3_khai_ecosys",
+            name: "2. Khai Ecosys",
+            major: "3. Ecosys",
+            desc: ""
+        },
+        {
+            id: "s3_check_ecosys",
+            name: "3. Check Ecosys",
+            major: "3. Ecosys",
+            desc: ""
+        },
+        {
+            id: "s3_up_chung_tu_ky_so",
+            name: "4. Chuẩn bị + Up chứng từ + Ký điện tử",
+            major: "3. Ecosys",
+            desc: ""
+        },
+
+        // 4. Báo cáo
+        {
+            id: "s4_nop_tien",
+            name: "1. Nộp tiền",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+        {
+            id: "s4_theo_doi_co",
+            name: "2. Theo dõi tiến độ C/O",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+        {
+            id: "s4_bo_sung_giai_trinh",
+            name: "3. Bổ sung chứng từ + giải trình",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+        {
+            id: "s4_gui_co_khach_hang",
+            name: "4. Gửi C/O và chứng từ lô hàng cho khách",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+        {
+            id: "s4_chot_debit",
+            name: "5. Chốt debit",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+        {
+            id: "s4_chot_tru_lui_thang",
+            name: "6. Chốt trừ lùi tháng (nếu có)",
+            major: "4. Báo cáo",
+            desc: ""
+        },
+
+        // 5. In chứng từ
+        {
+            id: "s5_tao_file_in",
+            name: "1. Tạo file in (form giấy)",
+            major: "5. In chứng từ",
+            desc: ""
+        },
+        {
+            id: "s5_in_chung_tu",
+            name: "2. In form + chứng từ",
+            major: "5. In chứng từ",
+            desc: ""
+        }
     ];
+
     edges = [
-        { from:"step_nhan_ho_so",      to:"step_kiem_tra",        label:"hồ sơ đến" },
-        { from:"step_kiem_tra",        to:"step_bo_sung",         label:"thiếu hồ sơ" },
-        { from:"step_kiem_tra",        to:"step_phan_tich",       label:"đủ điều kiện" },
-        { from:"step_bo_sung",         to:"step_kiem_tra",        label:"bổ sung xong" },
-        { from:"step_phan_tich",       to:"step_tham_dinh",       label:"bình thường" },
-        { from:"step_phan_tich",       to:"step_danh_gia_rui_ro", label:"có rủi ro" },
-        { from:"step_tham_dinh",       to:"step_phe_duyet_cap1",  label:"hoàn tất" },
-        { from:"step_danh_gia_rui_ro", to:"step_tham_dinh",       label:"đã xử lý" },
-        { from:"step_phe_duyet_cap1",  to:"step_phe_duyet_cap2",  label:"đồng ý" },
-        { from:"step_phe_duyet_cap1",  to:"step_danh_gia_rui_ro", label:"từ chối" },
-        { from:"step_phe_duyet_cap2",  to:"step_lap_ke_hoach",    label:"phê duyệt" },
-        { from:"step_lap_ke_hoach",    to:"step_thuc_hien",       label:"bắt đầu" },
-        { from:"step_thuc_hien",       to:"step_dieu_chinh",      label:"phát sinh" },
-        { from:"step_thuc_hien",       to:"step_nghiem_thu",      label:"hoàn thành" },
-        { from:"step_dieu_chinh",      to:"step_thuc_hien",       label:"điều chỉnh xong" },
-        { from:"step_nghiem_thu",      to:"step_ban_giao",        label:"nghiệm thu đạt" }
+        { from: "s1_nhan_chung_tu", to: "s1_tao_theo_doi_lo_hang", label: "" },
+        { from: "s1_nhan_chung_tu", to: "s1_kiem_tra_chung_tu", label: "" },
+
+        { from: "s1_kiem_tra_chung_tu", to: "s1_kiem_tra_dinh_muc", label: "Đủ, khớp" },
+        { from: "s1_kiem_tra_dinh_muc", to: "s1_kiem_tra_tru_lui", label: "Đủ" },
+
+        { from: "s1_kiem_tra_tru_lui", to: "s1_phu_luc_x", label: "" },
+        { from: "s1_phu_luc_x", to: "s1_nhap_tru_lui", label: "" },
+
+        { from: "s2_tao_data_lo_hang", to: "s2_bang_ke_can_lam", label: "" },
+        { from: "s2_bang_ke_can_lam", to: "s2_tru_lui", label: "" },
+        { from: "s2_tru_lui", to: "s2_kiem_tra_tieu_chi", label: "" },
+
+        { from: "s2_kiem_tra_tieu_chi", to: "s2_tru_lui", label: "Trừ lùi lại" },
+        { from: "s2_kiem_tra_tieu_chi", to: "s2_bao_khach", label: "Không đạt" },
+        { from: "s2_kiem_tra_tieu_chi", to: "s2_tao_bang_ke", label: "Đạt" },
+
+        { from: "s2_bang_ke_can_lam", to: "s3_tao_file_ecosys", label: "" },
+        { from: "s3_tao_file_ecosys", to: "s3_khai_ecosys", label: "" },
+        { from: "s3_khai_ecosys", to: "s3_check_ecosys", label: "" },
+        { from: "s3_check_ecosys", to: "s3_khai_ecosys", label: "Sửa lại nếu sai" },
+
+        { from: "s2_tao_bang_ke", to: "s3_up_chung_tu_ky_so", label: "" },
+        { from: "s3_check_ecosys", to: "s3_up_chung_tu_ky_so", label: "Pass" },
+
+        { from: "s3_up_chung_tu_ky_so", to: "s5_tao_file_in", label: "" },
+        { from: "s5_tao_file_in", to: "s5_in_chung_tu", label: "" },
+
+        { from: "s3_up_chung_tu_ky_so", to: "s4_nop_tien", label: "" },
+        { from: "s4_nop_tien", to: "s4_theo_doi_co", label: "" },
+
+        { from: "s4_theo_doi_co", to: "s4_bo_sung_giai_trinh", label: "Nếu C/O có thay đổi hoặc bị từ chối" },
+        { from: "s4_theo_doi_co", to: "s4_gui_co_khach_hang", label: "C/O được cấp" },
+
+        { from: "s4_gui_co_khach_hang", to: "s4_chot_debit", label: "" },
+
+        { from: "s2_tru_lui", to: "s4_chot_tru_lui_thang", label: "Cuối tháng" }
     ];
 }
+    
 function initDefaultCompanies() {
     companies = [
         { id:"comp1", name:"ABC Technology" },
