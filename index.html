@@ -446,7 +446,12 @@ async function downloadFromGist(gistId) {
         notes = content.notes || [];
         saveAll();  // lưu xuống localStorage
         // Làm mới toàn bộ giao diện
-        refreshAllGraphs();
+        // Làm mới toàn bộ giao diện
+        initTab1();  // destroy cy1 và tạo lại với data + positions mới
+        renderCompanyList();
+        if (selCompany) initTab2();
+        renderAdmin();
+        alert('Tải thành công!');
         renderCompanyList();
         renderAdmin();
         if (selStep1) renderPanel1(selStep1);
