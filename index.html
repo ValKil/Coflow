@@ -187,7 +187,6 @@
         <button class="btn btn-secondary btn-sm" id="set-token"><i class="fas fa-key"></i> Token</button>
     </div>
 
-</div>
 
 </header>
 
@@ -382,7 +381,6 @@ async function uploadToGist(gistId) {
 
     const data = { steps, edges, companies, notes, nodePositions  };
     const content = JSON.stringify(data, null, 2);
-    const data = { steps, edges, companies, notes, nodePositions };
     const fileName = 'workflow_data.json';
 
     const url = gistId 
@@ -481,41 +479,7 @@ function loadAll() {
 }
 
 // ── default data ──
-//function initDefaultSteps() {
-//    steps = [
-//        { id:"step_nhan_ho_so",      name:"Nhận hồ sơ",                major:"1. Tiếp nhận",  desc:"Tiếp nhận hồ sơ từ khách hàng, kiểm tra sơ bộ." },
-//        { id:"step_kiem_tra",        name:"Kiểm tra tính hợp lệ",      major:"1. Tiếp nhận",  desc:"Xác minh đủ thành phần, mẫu mã hồ sơ." },
-//        { id:"step_bo_sung",         name:"Bổ sung hồ sơ",             major:"1. Tiếp nhận",  desc:"Yêu cầu KH bổ sung tài liệu còn thiếu." },
-//        { id:"step_phan_tich",       name:"Phân tích sơ bộ",           major:"2. Thẩm định",  desc:"Nhận xét ban đầu, phân loại hồ sơ." },
-//        { id:"step_tham_dinh",       name:"Thẩm định chuyên sâu",      major:"2. Thẩm định",  desc:"Phân tích kỹ thuật, tài chính, pháp lý." },
-//        { id:"step_danh_gia_rui_ro", name:"Đánh giá rủi ro",           major:"2. Thẩm định",  desc:"Xác định và định lượng rủi ro tiềm ẩn." },
-//        { id:"step_phe_duyet_cap1",  name:"Phê duyệt cấp 1",           major:"3. Phê duyệt",  desc:"Trình lên quản lý cấp trung." },
-//        { id:"step_phe_duyet_cap2",  name:"Phê duyệt cấp 2",           major:"3. Phê duyệt",  desc:"Ban giám đốc phê duyệt cuối." },
-//        { id:"step_lap_ke_hoach",    name:"Lập kế hoạch triển khai",   major:"4. Triển khai", desc:"Xây dựng timeline và phân công nguồn lực." },
-//        { id:"step_thuc_hien",       name:"Thực hiện & giám sát",      major:"4. Triển khai", desc:"Thực thi các hạng mục theo kế hoạch." },
-//        { id:"step_dieu_chinh",      name:"Điều chỉnh kế hoạch",       major:"4. Triển khai", desc:"Xử lý phát sinh, cập nhật kế hoạch." },
-//        { id:"step_nghiem_thu",      name:"Kiểm tra nghiệm thu",       major:"5. Bàn giao",   desc:"Kiểm tra chất lượng đầu ra trước bàn giao." },
-//        { id:"step_ban_giao",        name:"Bàn giao & kết thúc",       major:"5. Bàn giao",   desc:"Ký biên bản, lưu hồ sơ, đóng dự án." }
-//    ];
-//    edges = [
-//        { from:"step_nhan_ho_so",      to:"step_kiem_tra",        label:"hồ sơ đến" },
-//        { from:"step_kiem_tra",        to:"step_bo_sung",         label:"thiếu hồ sơ" },
-//        { from:"step_kiem_tra",        to:"step_phan_tich",       label:"đủ điều kiện" },
-//        { from:"step_bo_sung",         to:"step_kiem_tra",        label:"bổ sung xong" },
-//        { from:"step_phan_tich",       to:"step_tham_dinh",       label:"bình thường" },
-//        { from:"step_phan_tich",       to:"step_danh_gia_rui_ro", label:"có rủi ro" },
-//        { from:"step_tham_dinh",       to:"step_phe_duyet_cap1",  label:"hoàn tất" },
-//        { from:"step_danh_gia_rui_ro", to:"step_tham_dinh",       label:"đã xử lý" },
-//        { from:"step_phe_duyet_cap1",  to:"step_phe_duyet_cap2",  label:"đồng ý" },
-//        { from:"step_phe_duyet_cap1",  to:"step_danh_gia_rui_ro", label:"từ chối" },
-//        { from:"step_phe_duyet_cap2",  to:"step_lap_ke_hoach",    label:"phê duyệt" },
-//        { from:"step_lap_ke_hoach",    to:"step_thuc_hien",       label:"bắt đầu" },
-//        { from:"step_thuc_hien",       to:"step_dieu_chinh",      label:"phát sinh" },
-//        { from:"step_thuc_hien",       to:"step_nghiem_thu",      label:"hoàn thành" },
-//        { from:"step_dieu_chinh",      to:"step_thuc_hien",       label:"điều chỉnh xong" },
-//        { from:"step_nghiem_thu",      to:"step_ban_giao",        label:"nghiệm thu đạt" }
-//    ];
-//}
+
 
 function initDefaultSteps() {
     steps = [
