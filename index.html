@@ -929,11 +929,17 @@ function createCy(containerId, highlightId, companyId, onTap) {
 
     // Sự kiện kéo thả node: lưu vị trí
     instance.on('dragfree', 'node', () => {
-        saveNodePositions(instance, `${containerId}_positions`);
+        saveNodePositions(instance, 'cy1_positions');
+        if (containerId === 'cy1' && cy2) {
+            cy2.nodes().forEach(n => {
+                const pos = instance.$id(n.id()).position();
+                if (pos) n.position(pos);
+            });
+        }
     });
 
      // Khôi phục vị trí đã lưu (nếu có), nếu không thì chạy dagre layout
-    if (!applyPresetLayout(instance, `${containerId}_positions`)) {
+    if (!applyPresetLayout(instance, 'cy1_positions')) {
         instance.layout(DAGRE_LAYOUT).run();
     }
     
@@ -1292,7 +1298,7 @@ function refreshAllGraphs() {
     }
     if (cy2) {
         updateCyData(cy2, selStep2, selCompany);
-        applyPresetLayout(cy2, 'cy2_positions');
+        applyPresetLayout(cy2, 'cy1_positions');
     }
 }
 
