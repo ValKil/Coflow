@@ -509,7 +509,9 @@ function loadAll() {
 
 function initDefaultSteps() {
     steps = [
-        // 1. Nhận thông tin từ khách hàng
+    
+        // ===== S1. Nhận thông tin từ khách hàng =====
+    
         {
             id: "s1_nhan_chung_tu",
             name: "1. Nhận chứng từ",
@@ -552,8 +554,9 @@ function initDefaultSteps() {
             major: "1. Nhận thông tin từ khách hàng",
             desc: ""
         },
-
-        // 2. Làm bảng kê
+    
+        // ===== S2. Làm bảng kê =====
+    
         {
             id: "s2_tao_data_lo_hang",
             name: "1. Tạo data thông tin lô hàng",
@@ -590,8 +593,9 @@ function initDefaultSteps() {
             major: "2. Làm bảng kê",
             desc: ""
         },
-
-        // 3. Ecosys
+    
+        // ===== S3. Ecosys =====
+    
         {
             id: "s3_tao_file_ecosys",
             name: "1. Tạo file khai Ecosys",
@@ -606,7 +610,7 @@ function initDefaultSteps() {
         },
         {
             id: "s3_check_ecosys",
-            name: "3. Check Ecosys",
+            name: "3. Check Ecosys và chứng từ",
             major: "3. Ecosys",
             desc: ""
         },
@@ -616,8 +620,9 @@ function initDefaultSteps() {
             major: "3. Ecosys",
             desc: ""
         },
-
-        // 4. Báo cáo
+    
+        // ===== S4. Báo cáo =====
+    
         {
             id: "s4_nop_tien",
             name: "1. Nộp tiền",
@@ -654,8 +659,9 @@ function initDefaultSteps() {
             major: "4. Báo cáo",
             desc: ""
         },
-
-        // 5. In chứng từ
+    
+        // ===== S5. In chứng từ =====
+    
         {
             id: "s5_tao_file_in",
             name: "1. Tạo file in (form giấy)",
@@ -668,46 +674,77 @@ function initDefaultSteps() {
             major: "5. In chứng từ",
             desc: ""
         }
+    
     ];
 
     edges = [
-        { from: "s1_nhan_chung_tu", to: "s1_tao_theo_doi_lo_hang", label: "" },
-        { from: "s1_nhan_chung_tu", to: "s1_kiem_tra_chung_tu", label: "" },
-
-        { from: "s1_kiem_tra_chung_tu", to: "s1_kiem_tra_dinh_muc", label: "Đủ, khớp" },
-        { from: "s1_kiem_tra_dinh_muc", to: "s1_kiem_tra_tru_lui", label: "Đủ" },
-
-        { from: "s1_kiem_tra_tru_lui", to: "s1_phu_luc_x", label: "" },
-        { from: "s1_phu_luc_x", to: "s1_nhap_tru_lui", label: "" },
-
-        { from: "s2_tao_data_lo_hang", to: "s2_bang_ke_can_lam", label: "" },
-        { from: "s2_bang_ke_can_lam", to: "s2_tru_lui", label: "" },
-        { from: "s2_tru_lui", to: "s2_kiem_tra_tieu_chi", label: "" },
-
-        { from: "s2_kiem_tra_tieu_chi", to: "s2_tru_lui", label: "Trừ lùi lại" },
-        { from: "s2_kiem_tra_tieu_chi", to: "s2_bao_khach", label: "Không đạt" },
-        { from: "s2_kiem_tra_tieu_chi", to: "s2_tao_bang_ke", label: "Đạt" },
-
-        { from: "s2_bang_ke_can_lam", to: "s3_tao_file_ecosys", label: "" },
-        { from: "s3_tao_file_ecosys", to: "s3_khai_ecosys", label: "" },
-        { from: "s3_khai_ecosys", to: "s3_check_ecosys", label: "" },
-        { from: "s3_check_ecosys", to: "s3_khai_ecosys", label: "Sửa lại nếu sai" },
-
-        { from: "s2_tao_bang_ke", to: "s3_up_chung_tu_ky_so", label: "" },
-        { from: "s3_check_ecosys", to: "s3_up_chung_tu_ky_so", label: "Pass" },
-
-        { from: "s3_up_chung_tu_ky_so", to: "s5_tao_file_in", label: "" },
-        { from: "s5_tao_file_in", to: "s5_in_chung_tu", label: "" },
-
-        { from: "s3_up_chung_tu_ky_so", to: "s4_nop_tien", label: "" },
-        { from: "s4_nop_tien", to: "s4_theo_doi_co", label: "" },
-
-        { from: "s4_theo_doi_co", to: "s4_bo_sung_giai_trinh", label: "Nếu C/O có thay đổi hoặc bị từ chối" },
-        { from: "s4_theo_doi_co", to: "s4_gui_co_khach_hang", label: "C/O được cấp" },
-
-        { from: "s4_gui_co_khach_hang", to: "s4_chot_debit", label: "" },
-
-        { from: "s2_tru_lui", to: "s4_chot_tru_lui_thang", label: "Cuối tháng" }
+    
+        // ===== S1. Nhận thông tin từ khách hàng =====
+    
+        { from:"s1_nhan_chung_tu", to:"s1_kiem_tra_chung_tu", label:"" },
+        { from:"s1_nhan_chung_tu", to:"s1_tao_theo_doi_lo_hang", label:"" },
+    
+        { from:"s1_tao_theo_doi_lo_hang", to:"s2_tao_data_lo_hang", label:"" },
+        { from:"s1_tao_theo_doi_lo_hang", to:"s4_theo_doi_co", label:"" },
+    
+        { from:"s1_kiem_tra_chung_tu", to:"s1_kiem_tra_dinh_muc", label:"Đủ, khớp" },
+    
+        { from:"s1_kiem_tra_dinh_muc", to:"s1_kiem_tra_tru_lui", label:"Đủ" },
+    
+        { from:"s1_kiem_tra_tru_lui", to:"s1_phu_luc_x", label:"" },
+    
+        { from:"s1_phu_luc_x", to:"s1_nhap_tru_lui", label:"" },
+    
+        { from:"s1_nhap_tru_lui", to:"s4_chot_tru_lui_thang", label:"" },
+    
+    
+        // ===== S2. Làm bảng kê =====
+    
+        { from:"s2_tao_data_lo_hang", to:"s2_bang_ke_can_lam", label:"" },
+    
+        { from:"s2_bang_ke_can_lam", to:"s2_tru_lui", label:"" },
+        { from:"s2_bang_ke_can_lam", to:"s3_tao_file_ecosys", label:"" },
+    
+        { from:"s2_tru_lui", to:"s2_kiem_tra_tieu_chi", label:"" },
+        { from:"s2_tru_lui", to:"s4_chot_tru_lui_thang", label:"Cuối tháng" },
+    
+        { from:"s2_kiem_tra_tieu_chi", to:"s2_bao_khach", label:"Không đạt" },
+        { from:"s2_kiem_tra_tieu_chi", to:"s2_tao_bang_ke", label:"Đạt" },
+        { from:"s2_kiem_tra_tieu_chi", to:"s2_tru_lui", label:"Trừ lùi lại" },
+    
+        { from:"s2_bao_khach", to:"s2_bang_ke_can_lam", label:"Khách điều chỉnh" },
+    
+        { from:"s2_tao_bang_ke", to:"s3_check_ecosys", label:"Kiểm tra chéo" },
+        { from:"s2_tao_bang_ke", to:"s3_up_chung_tu_ky_so", label:"" },
+    
+    
+        // ===== S3. Ecosys =====
+    
+        { from:"s3_tao_file_ecosys", to:"s3_khai_ecosys", label:"" },
+    
+        { from:"s3_khai_ecosys", to:"s3_check_ecosys", label:"" },
+    
+        { from:"s3_check_ecosys", to:"s3_khai_ecosys", label:"Sửa lại nếu sai" },
+        { from:"s3_check_ecosys", to:"s3_up_chung_tu_ky_so", label:"Pass" },
+    
+        { from:"s3_up_chung_tu_ky_so", to:"s4_nop_tien", label:"" },
+        { from:"s3_up_chung_tu_ky_so", to:"s5_tao_file_in", label:"" },
+    
+    
+        // ===== S4. Báo cáo =====
+    
+        { from:"s4_nop_tien", to:"s4_theo_doi_co", label:"" },
+    
+        { from:"s4_theo_doi_co", to:"s4_bo_sung_giai_trinh", label:"Nếu C/O có thay đổi hoặc bị từ chối" },
+        { from:"s4_theo_doi_co", to:"s4_gui_co_khach_hang", label:"C/O được cấp" },
+    
+        { from:"s4_gui_co_khach_hang", to:"s4_chot_debit", label:"" },
+    
+    
+        // ===== S5. In chứng từ =====
+    
+        { from:"s5_tao_file_in", to:"s5_in_chung_tu", label:"" }
+    
     ];
 }
     
