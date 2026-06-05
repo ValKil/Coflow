@@ -451,7 +451,6 @@ async function downloadFromGist(gistId) {
         renderCompanyList();
         if (selCompany) initTab2();
         renderAdmin();
-        alert('Tải thành công!');
         renderCompanyList();
         renderAdmin();
         if (selStep1) renderPanel1(selStep1);
@@ -886,9 +885,9 @@ function applyPresetLayout(cy, key) {
     // Ưu tiên 0: default hardcoded (chỉ dùng cho cy1)
     if (key === 'cy1_positions' && !localStorage.getItem(key) && !nodePositions[key]) {
         positions = DEFAULT_POSITIONS_CY1;
-
+    }
     // Ưu tiên 1: Dùng biến toàn cục nodePositions (đã tải từ Gist)
-    if (nodePositions && nodePositions[key]) {
+    if (nodePositions[key]) {
         positions = nodePositions[key];
     }
     // Ưu tiên 2: Nếu không có, đọc từ localStorage
@@ -1328,9 +1327,10 @@ document.querySelectorAll('.tab-btn').forEach(btn => {
 // ═══════════════════════════════════════════════════
 //  BOOT
 // ═══════════════════════════════════════════════════
+cytoscape.use(cytoscapeDagre);
 loadAll();
 // register dagre layout
-cytoscape.use(cytoscapeDagre);
+
 
 initTab1();
 renderCompanyList();
