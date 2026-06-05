@@ -333,7 +333,7 @@ let steps     = [];
 let edges     = [];
 let companies = [];
 let notes     = [];
-
+let nodePositions = { cy1: {}, cy2: {} };
 let selStep1    = null;   // selected step id in tab1
 let selCompany  = null;   // selected company id in tab2
 let selStep2    = null;   // selected step id in tab2
@@ -361,6 +361,7 @@ function saveAll() {
     } catch(e) { console.warn('localStorage unavailable:', e); }
 }
 
+
 // Hàm lấy token
 function getGitToken() {
     return sessionStorage.getItem('github_token') || localStorage.getItem('github_token');
@@ -376,10 +377,12 @@ function setGitToken(token) {
 
 async function uploadToGist(gistId) {
     const token = getGitToken();
+    
     if (!token) { alert('Chưa có GitHub token. Nhấn nút Token để nhập.'); return; }
 
-    const data = { steps, edges, companies, notes };
+    const data = { steps, edges, companies, notes, nodePositions  };
     const content = JSON.stringify(data, null, 2);
+    const data = { steps, edges, companies, notes, nodePositions };
     const fileName = 'workflow_data.json';
 
     const url = gistId 
@@ -431,6 +434,13 @@ async function downloadFromGist(gistId) {
         const file = gist.files['workflow_data.json'];
         if (!file) throw new Error('Không tìm thấy file workflow_data.json trong Gist');
         const content = JSON.parse(file.content);
+        if (content.nodePositions) {
+            nodePositions = content.nodePositions;
+            // Lưu lại vào localStorage để các biểu đồ hiện tại áp dụng
+            for (const [key, pos] of Object.entries(nodePositions)) {
+                localStorage.setItem(key, JSON.stringify(pos));
+            }
+        }
         // Gán lại dữ liệu
         steps = content.steps || [];
         edges = content.edges || [];
@@ -887,6 +897,45 @@ const DAGRE_LAYOUT = {
     padding: 30
 };
 
+// Lưu vị trí các node vào localStorage
+function saveNodePositions(cy, key) {
+    if (!cy) return;
+    const positions = {};
+    cy.nodes().forEach(node => {
+        const pos = node.position();
+        positions[node.id()] = { x: pos.x, y: pos.y };
+    });
+    nodePositions[key] = positions;
+    // Vẫn lưu localStorage để dùng nhanh khi refresh trang (không bắt buộc)
+    localStorage.setItem(key, JSON.stringify(positions));
+}
+
+// Khôi phục vị trí bằng layout preset (nếu có), trả về true nếu thành công
+function applyPresetLayout(cy, key) {
+    let positions = null;
+
+    // Ưu tiên 1: Dùng biến toàn cục nodePositions (đã tải từ Gist)
+    if (nodePositions && nodePositions[key]) {
+        positions = nodePositions[key];
+    }
+    // Ưu tiên 2: Nếu không có, đọc từ localStorage
+    if (!positions) {
+        const saved = localStorage.getItem(key);
+        if (saved) positions = JSON.parse(saved);
+    }
+    
+    if (!positions) return false;
+
+    // Áp dụng layout preset với tọa độ đã khôi phục
+    cy.layout({
+        name: 'preset',
+        positions: node => positions[node.id()] || { x: 0, y: 0 },
+        fit: true,
+        padding: 30
+    }).run();
+    return true;
+}
+    
 function createCy(containerId, highlightId, companyId, onTap) {
     const container = document.getElementById(containerId);
     if (!container) return null;
@@ -895,7 +944,7 @@ function createCy(containerId, highlightId, companyId, onTap) {
         container,
         elements: buildCyElements(highlightId, companyId),
         style: CY_STYLE,
-        layout: DAGRE_LAYOUT,
+        layout: { name: 'preset' },
         userZoomingEnabled: true,
         userPanningEnabled: true,
         boxSelectionEnabled: false,
@@ -906,6 +955,16 @@ function createCy(containerId, highlightId, companyId, onTap) {
 
     instance.on('tap', 'node', evt => onTap(evt.target.id()));
 
+    // Sự kiện kéo thả node: lưu vị trí
+    instance.on('dragfree', 'node', () => {
+        saveNodePositions(instance, `${containerId}_positions`);
+    });
+
+     // Khôi phục vị trí đã lưu (nếu có), nếu không thì chạy dagre layout
+    if (!applyPresetLayout(instance, `${containerId}_positions`)) {
+        instance.layout(DAGRE_LAYOUT).run();
+    }
+    
     return instance;
 }
 
@@ -962,6 +1021,7 @@ function initTab1() {
         updateCyData(cy1, selStep1, null);
         renderPanel1(stepId);
     });
+    
 }
 
 function renderPanel1(stepId) {
@@ -987,7 +1047,10 @@ function renderPanel1(stepId) {
     document.getElementById('panel1').querySelector('.panel-title').textContent = '📌 Lưu ý cho: ' + step.name;
 }
 
-document.getElementById('btn-reset-layout1').addEventListener('click', () => runDagre(cy1));
+document.getElementById('btn-reset-layout1').addEventListener('click', () => {
+    localStorage.removeItem('cy1_positions');
+    if (cy1) cy1.layout(DAGRE_LAYOUT).run();
+});
 document.getElementById('btn-fit1').addEventListener('click', () => cy1 && cy1.fit(undefined, 30));
 
 // ═══════════════════════════════════════════════════
@@ -1001,6 +1064,7 @@ function initTab2() {
         updateCyData(cy2, selStep2, selCompany);
         renderPanel2(stepId);
     });
+    
 }
 
 function renderPanel2(stepId) {
@@ -1067,7 +1131,10 @@ document.getElementById('btn-add-company').addEventListener('click', () => {
     companies.push({ id: uid(), name });
     saveAll(); renderCompanyList(); inp.value = '';
 });
-document.getElementById('btn-reset-layout2').addEventListener('click', () => runDagre(cy2));
+document.getElementById('btn-reset-layout2').addEventListener('click', () => {
+    localStorage.removeItem('cy2_positions');
+    if (cy2) cy2.layout(DAGRE_LAYOUT).run();
+});
 document.getElementById('btn-fit2').addEventListener('click', () => cy2 && cy2.fit(undefined, 30));
 
 // ═══════════════════════════════════════════════════
@@ -1246,8 +1313,14 @@ document.getElementById('btn-cancel-edge').addEventListener('click', () => {
 });
 
 function refreshAllGraphs() {
-    if (cy1) { updateCyData(cy1, selStep1, null); }
-    if (cy2) { updateCyData(cy2, selStep2, selCompany); }
+    if (cy1) {
+        updateCyData(cy1, selStep1, null);
+        applyPresetLayout(cy1, 'cy1_positions'); // khôi phục vị trí cũ (nếu node còn tồn tại)
+    }
+    if (cy2) {
+        updateCyData(cy2, selStep2, selCompany);
+        applyPresetLayout(cy2, 'cy2_positions');
+    }
 }
 
 // ═══════════════════════════════════════════════════
